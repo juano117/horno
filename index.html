@@ -93,7 +93,7 @@ const REC = {
   },
   torta:{
     n:"Torta de chocolate", d:"Media", img:"imagenes/torta.png", 
-    bMsg:"Mete el molde de torta al horno y cuenta mentalmente 25 segundos.", bTime: 25,
+    bMsg:"Mete el molde de torta al horno y cuenta mentalmente 18 segundos.", bTime: 18,
     items:{chocolate:200,harina:250,azucar:100}
   }
 };
@@ -145,9 +145,9 @@ function openRecipe(r){
   
   // Si están todos los ingredientes, mostramos el botón para ir a hornear
   if (all) {
-    $("recMsg").innerHTML = `¡Receta lista! <br><br> <button class="btn main" onclick="openBake('${r}')">Ir al horno 🔥</button>`;
+    $("recMsg").innerHTML = `Receta lista :) <br><br> <button class="btn main" onclick="openBake('${r}')">Al horno! 🔥</button>`;
   } else {
-    $("recMsg").textContent = done.length + " de " + Object.keys(items).length + " ingredientes · Acerca el sticker de un ingrediente al celular";
+    $("recMsg").textContent = done.length + " de " + Object.keys(items).length + " ingredientes · Acerca un ingrediente";
   }
   
   $("reset").onclick = () => { setDone(r, []); openRecipe(r); };

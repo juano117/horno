@@ -1,46 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Recetario</title>
-  <style>
-    :root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
-    header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
-    header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
-    header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
-    .view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
-    .grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-    .card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
-    .card .e{font-size:48px}.card small{display:block;opacity:.7}
-    #ingGrid .card{cursor:default}
-    .card.done{border-color:var(--ok);background:#e6f4d7}
-    .msg{margin:18px 0 0;font-size:1.2rem}
-    .hint{font-size:1rem;opacity:.8;margin:8px 0 0}
-    #dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
-    #ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
-    #dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
-    background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
-    #knob{position:absolute;inset:0;border-radius:50%}
-    #knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
-    #w{font-size:3rem;font-weight:700;margin:0}
-    #w.ok{color:var(--ok)}
-    .row{display:flex;gap:10px;justify-content:center;margin-top:12px}
-    .btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
-    .btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
-    .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
-    .img-fluida {
-      width: 100%;         
-      height: 65px;        
-      object-fit: contain; 
-      margin-bottom: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recetario</title>
+<style>
+:root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
+header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
+header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
+header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
+.view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
+.grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
+.card .e{font-size:48px}.card small{display:block;opacity:.7}
+#ingGrid .card{cursor:default}
+.card.done{border-color:var(--ok);background:#e6f4d7}
+.msg{margin:18px 0 0;font-size:1.2rem}
+.hint{font-size:1rem;opacity:.8;margin:8px 0 0}
+#dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
+#ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
+#dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
+ background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
+#knob{position:absolute;inset:0;border-radius:50%}
+#knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
+#w{font-size:3rem;font-weight:700;margin:0}
+#w.ok{color:var(--ok)}
+.row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
+.btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
+</style>
 </head>
 <body>
-
 <header><button id="back" hidden>‹</button><h1 id="title">RECETARIO</h1><span style="width:36px"></span></header>
 
 <section class="view on" id="home"><div class="grid" id="homeGrid"></div></section>
@@ -64,69 +57,42 @@
 <section class="view" id="wrong"><div style="font-size:64px" id="wrongE"></div><p class="msg" id="wrongT"></p>
   <div class="row"><button class="btn main" id="wrongBtn">Volver a la receta</button></div></section>
 
-<section class="view" id="bake">
-  <div style="font-size:64px">🔥</div>
-  <p class="msg" id="bakeMsg"></p>
-  <h2 id="bakeResult" style="margin: 20px 0; color: var(--ok);"></h2>
-  <div class="row">
-    <button class="btn main" id="bakeBtn">Meter al horno</button>
-  </div>
-</section>
-
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
 <script>
-
-
-// ---- 2. BASES DE DATOS (ING y REC) ----
+// ---- DATOS (edítalos aquí) ----
 const ING = {
-  masa:{n:"Masa para pizza",img:"imagenes/masa.png"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
-  pepperoni:{n:"Pepperoni",img:"imagenes/pepperoni.png"}, semola:{n:"Sémola de trigo",img:"imagenes/semola.png"},
-  chocolate:{n:"Cocoa",img:"imagenes/cocoa.png"}, harina:{n:"Harina",img:"imagenes/harina.png"}, azucar:{n:"Azúcar",img:"imagenes/azucar.png"}
+  masa:{n:"Masa para pizza",e:"🫓"}, queso:{n:"Queso mozzarella",e:"🧀"}, tomate:{n:"Tomates",e:"🍅"},
+  pepperoni:{n:"Pepperoni",e:"🍖"}, semola:{n:"Sémola de trigo",e:"🌾"},
+  chocolate:{n:"Chocolate",e:"🍫"}, harina:{n:"Harina",e:"🌾"}, azucar:{n:"Azúcar",e:"🍬"}
 };
-
 const REC = {
-  pizza:{
-    n:"Pizza de pepperoni", d:"Baja", img:"imagenes/pizza.png", 
-    bMsg:"Mete la pizza al horno de cartón y cuenta mentalmente 15 segundos.", bTime: 15,
-    items:{masa:300,queso:200,tomate:120,pepperoni:80,semola:50}
-  },
-  torta:{
-    n:"Torta de chocolate", d:"Media", img:"imagenes/torta.png", 
-    bMsg:"Mete el molde de torta al horno y cuenta mentalmente 18 segundos.", bTime: 18,
-    items:{chocolate:200,harina:250,azucar:100}
-  }
+  pizza:{n:"Pizza de pepperoni",d:"Baja",e:"🍕",items:{masa:250,queso:200,tomate:120,pepperoni:80,semola:50}},
+  torta:{n:"Torta de chocolate",d:"Media",e:"🍫",items:{chocolate:200,harina:250,azucar:100}}
 };
+const PER_TURN = 100;  // gramos por vuelta completa del dial
+const TOL = 2;         // tolerancia en gramos
 
-const PER_TURN = 150;  // gramos por vuelta completa del dial
-const TOL = 2;         // tolerancia en gramos (+/- 2g)
-
-// ---- 3. ESTADO GLOBAL DE LA APP ----
+// ---- ESTADO ----
 const $ = id => document.getElementById(id);
 let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
-let timeStart = 0; // Variable global para el horno
 
-// Utilidades para guardar en el celular
 const getDone = r => { try { return JSON.parse(localStorage.getItem("horno:" + r)) || []; } catch(e) { return []; } };
 const setDone = (r, a) => { try { localStorage.setItem("horno:" + r, JSON.stringify(a)); } catch(e) {} };
-const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
-const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
 
-// Función para cambiar de pantalla
 function show(id, title, back){
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
   $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
 }
 
-// ---- 4. FUNCIONES DE INTERFAZ (Vistas) ----
+const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
+const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
+
+// ---- PANTALLAS ----
 function openHome(){
   setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
-    `<button class="card" data-r="${k}">
-       <img src="${r.img}" class="img-fluida" alt="${r.n}">
-       ${r.n}<small>Dificultad: ${r.d}</small>
-     </button>`
-  ).join("");
+    `<button class="card" data-r="${k}"><div class="e">${r.e}</div>${r.n}<small>Dificultad: ${r.d}</small></button>`).join("");
   $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
   show("home", "RECETARIO", null);
 }
@@ -134,23 +100,10 @@ function openHome(){
 function openRecipe(r){
   setActive(r);
   const done = getDone(r), items = REC[r].items;
-  
   $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
-    `<div class="card ${done.includes(k) ? "done" : ""}">
-       <img src="${ING[k].img}" class="img-fluida" alt="${ING[k].n}">
-       ${ING[k].n}
-       <small>${done.includes(k) ? "✓ Listo" : g + " g"}</small>
-     </div>`
-  ).join("");
-  
+    `<div class="card ${done.includes(k) ? "done" : ""}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></div>`).join("");
   const all = Object.keys(items).every(k => done.includes(k));
-  
-  if (all) {
-    $("recMsg").innerHTML = `Receta lista :) <br><br> <button class="btn main" onclick="openBake('${r}')">Al horno! 🔥</button>`;
-  } else {
-    $("recMsg").textContent = done.length + " de " + Object.keys(items).length + " ingredientes · Acerca un ingrediente";
-  }
-  
+  $("recMsg").textContent = all ? "¡Receta lista! A hornear 🔥" : done.length + " de " + Object.keys(items).length + " ingredientes · Acerca el sticker de un ingrediente al celular";
   $("reset").onclick = () => { setDone(r, []); openRecipe(r); };
   show("recipe", REC[r].n, openHome);
 }
@@ -166,22 +119,13 @@ function openIng(r, i, g){
 }
 
 function openWrong(r, i){
-  $("wrongE").innerHTML = `<img src="${ING[i].img}" style="height: 120px; object-fit: contain;" alt="">`;
-  $("wrongT").textContent = "🚫 " + ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongE").textContent = "🚫";
+  $("wrongT").textContent = ING[i].e + " " + ING[i].n + " no se necesita en " + REC[r].n + ".";
   $("wrongBtn").onclick = () => openRecipe(r);
   try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
-  show("wrong", "Error", () => openRecipe(r));
+  show("wrong", "¡Ojo!", () => openRecipe(r));
 }
 
-function openBake(r) {
-  $("bakeMsg").textContent = REC[r].bMsg;
-  $("bakeBtn").textContent = "Al horno!";
-  $("bakeResult").textContent = ""; 
-  $("bakeBtn").onclick = () => startBaking(r);
-  show("bake", "Horneando...", () => openRecipe(r));
-}
-
-// ---- 5. LÓGICA DE HERRAMIENTAS (Dial y Horno) ----
 function weight(){ return Math.round(acc / 360 * PER_TURN); }
 
 function render(){
@@ -196,6 +140,7 @@ function render(){
   wasOk = ok;
 }
 
+// ---- RETROALIMENTACIÓN: vibración (Android), "switch" háptico (iOS, experimental) y sonido ----
 function feedback(){
   try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch(e) {}
   try { $("sw").click(); } catch(e) {}
@@ -207,53 +152,7 @@ function feedback(){
   $("dialWrap").classList.remove("pop"); void $("dialWrap").offsetWidth; $("dialWrap").classList.add("pop");
 }
 
-function startBaking(r) {
-  timeStart = Date.now(); 
-  $("bakeBtn").textContent = "Sacar del horno";
-  $("bakeBtn").onclick = () => stopBaking(r);
-}
-
-// ---- BOTÓN LISTO (Asegura el guardado del ingrediente) ----
-$("okBtn").onclick = () => {
-  // 1. Buscamos la receta actual o la recuperamos de la memoria activa
-  const recipeKey = cur.r || getActive();
-  
-  if (recipeKey && cur.i) {
-    const d = getDone(recipeKey);
-    if (!d.includes(cur.i)) d.push(cur.i); // Agregamos el ingrediente a la lista de listos
-    setDone(recipeKey, d);                 // Guardamos en el almacenamiento del celular
-    openRecipe(recipeKey);                 // Regresamos a la pantalla de la receta (¡ya estará verde!)
-  }
-};
-
-// ---- LIMPIEZA AUTOMÁTICA AL TERMINAR EN EL HORNO ----
-function stopBaking(r) {
-  const targetTime = REC[r].bTime; 
-  const elapsed = (Date.now() - timeStart) / 1000;
-  const diff = Math.abs(elapsed - targetTime);
-  
-  let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
-  
-  if (diff <= 2) {
-    msg += "MasterChef 👨‍🍳";
-  } else if (elapsed < targetTime) {
-    msg += "Sigue cruda :/";
-  } else {
-    msg += "Bro... 💀 🚒";
-  }
-  
-  $("bakeResult").innerText = msg;
-  $("bakeBtn").textContent = "Volver al recetario";
-  
-  // AQUÍ LIMPIAMOS LA MEMORIA:
-  $("bakeBtn").onclick = () => {
-    setDone(r, []);    // Borra los ingredientes guardados para ESTA receta en específico
-    setActive(null);   // Resetea la receta activa
-    openHome();        // Nos manda a la pantalla principal limpiecitos
-  };
-}
-
-// ---- 6. EVENTOS DEL DIAL (Gestos en pantalla) ----
+// ---- DIAL: arrastrar en círculo ----
 const dial = $("dial");
 const angleOf = e => { const b = dial.getBoundingClientRect(); return Math.atan2(e.clientY - b.top - b.height/2, e.clientX - b.left - b.width/2); };
 dial.addEventListener("pointerdown", e => {
@@ -274,27 +173,16 @@ $("okBtn").onclick = () => {
   setDone(cur.r, d); openRecipe(cur.r);
 };
 
-// ---- 7. ARRANQUE NFC (El portero de la app) ----
-// Esto va siempre al final para que todas las funciones anteriores ya existan
+// ---- ARRANQUE: enlace directo desde el sticker NFC (?i=masa&r=pizza&g=300) ----
 const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
 if (i && ING[i]) {
-  history.replaceState(null, "", location.pathname);
-  
   const act = getActive(), g = parseInt(p.get("g"), 10);
-  const done = act ? getDone(act) : []; 
-  
-  if (act && !REC[act].items[i]) {
-    openWrong(act, i);
-  } else if (act && done.includes(i)) {
-    alert("¡Ya pesaste " + ING[i].n + "! Ya está marcado como listo.");
-    openRecipe(act);
-  } else {
+  if (act && !REC[act].items[i]) openWrong(act, i);
+  else {
     const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
     openIng(r, i, Number.isNaN(g) ? null : g);
   }
-} else {
-  openHome();
-}
+} else openHome();
 </script>
 </body>
 </html>

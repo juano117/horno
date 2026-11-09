@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Recetario</title>
-    <style>
+  <style>
     :root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
     *{box-sizing:border-box}
     body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
@@ -32,14 +32,14 @@
     .btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
     .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
     .img-fluida {
-    width: 100%;         /* Toma todo el ancho disponible de la tarjeta */
-    height: 65px;        /* Altura fija para que todas las tarjetas se alineen parejas */
-    object-fit: contain; /* Evita que la imagen se aplaste o se estire */
-    margin-bottom: 8px;
-   }
-    </style>
-  </head>
-  <body>
+      width: 100%;         
+      height: 65px;        
+      object-fit: contain; 
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
 
 <header><button id="back" hidden>‹</button><h1 id="title">RECETARIO</h1><span style="width:36px"></span></header>
 
@@ -75,20 +75,19 @@
 
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
-
 <script>
-  if (location.protocol === "http:" && location.hostname.endsWith("github.io")) {
+// ---- 1. CONFIGURACIÓN Y REDIRECCIÓN ----
+if (location.protocol === "http:" && location.hostname.endsWith("github.io")) {
   location.replace(location.href.replace("http:", "https:"));
 }
 
-//  DATOS 
+// ---- 2. BASES DE DATOS (ING y REC) ----
 const ING = {
   masa:{n:"Masa para pizza",img:"imagenes/masa.png"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
   pepperoni:{n:"Pepperoni",img:"imagenes/pepperoni.png"}, semola:{n:"Sémola de trigo",img:"imagenes/semola.png"},
   chocolate:{n:"Cocoa",img:"imagenes/cocoa.png"}, harina:{n:"Harina",img:"imagenes/harina.png"}, azucar:{n:"Azúcar",img:"imagenes/azucar.png"}
 };
 
-// RECETAS
 const REC = {
   pizza:{
     n:"Pizza de pepperoni", d:"Baja", img:"imagenes/pizza.png", 
@@ -105,26 +104,27 @@ const REC = {
 const PER_TURN = 150;  // gramos por vuelta completa del dial
 const TOL = 2;         // tolerancia en gramos
 
-// ESTADO 
+// ---- 3. ESTADO GLOBAL DE LA APP ----
 const $ = id => document.getElementById(id);
 let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
+let timeStart = 0; // Variable global para el horno
 
+// Utilidades para guardar en el celular
 const getDone = r => { try { return JSON.parse(localStorage.getItem("horno:" + r)) || []; } catch(e) { return []; } };
 const setDone = (r, a) => { try { localStorage.setItem("horno:" + r, JSON.stringify(a)); } catch(e) {} };
+const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
+const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
 
+// Función para cambiar de pantalla
 function show(id, title, back){
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
   $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
 }
 
-const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
-const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
-
-// PANTALLAS 
+// ---- 4. FUNCIONES DE INTERFAZ (Vistas) ----
 function openHome(){
   setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
-    // Aquí cambiamos el div por un img que busca la propiedad r.img
     `<button class="card" data-r="${k}">
        <img src="${r.img}" class="img-fluida" alt="${r.n}">
        ${r.n}<small>Dificultad: ${r.d}</small>
@@ -133,6 +133,7 @@ function openHome(){
   $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
   show("home", "RECETARIO", null);
 }
+
 function openRecipe(r){
   setActive(r);
   const done = getDone(r), items = REC[r].items;
@@ -147,7 +148,6 @@ function openRecipe(r){
   
   const all = Object.keys(items).every(k => done.includes(k));
   
-  // Si están todos los ingredientes, mostramos el botón para ir a hornear
   if (all) {
     $("recMsg").innerHTML = `Receta lista :) <br><br> <button class="btn main" onclick="openBake('${r}')">Al horno! 🔥</button>`;
   } else {
@@ -168,9 +168,7 @@ function openIng(r, i, g){
   render();
 }
 
-// 1. REEMPLAZA TU FUNCIÓN OPENWRONG (Para que la imagen de error se vea gigante)
 function openWrong(r, i){
-  // Le quitamos la clase img-fluida y usamos un estilo directo de 120px
   $("wrongE").innerHTML = `<img src="${ING[i].img}" style="height: 120px; object-fit: contain;" alt="">`;
   $("wrongT").textContent = "🚫 " + ING[i].n + " no se necesita en " + REC[r].n + ".";
   $("wrongBtn").onclick = () => openRecipe(r);
@@ -178,32 +176,15 @@ function openWrong(r, i){
   show("wrong", "Error", () => openRecipe(r));
 }
 
-// 2. REEMPLAZA TODA TU SECCIÓN DE "ARRANQUE NFC" (Casi al final de tu código)
-// ---- ARRANQUE NFC ----
-const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
-if (i && ING[i]) {
-  // Magia UX: Borramos el parámetro de la URL sin recargar la página para evitar bucles
-  history.replaceState(null, "", location.pathname);
-  
-  const act = getActive(), g = parseInt(p.get("g"), 10);
-  const done = act ? getDone(act) : []; // Revisamos la memoria de lo que ya se hizo
-  
-  if (act && !REC[act].items[i]) {
-    // Si NO va en la receta, abrimos la pantalla de rechazo
-    openWrong(act, i);
-  } else if (act && done.includes(i)) {
-    // UX Extra: Si SÍ va, pero YA SE PESÓ, le avisamos y lo dejamos en la receta
-    alert("¡Ya pesaste " + ING[i].n + "! Ya está marcado como listo.");
-    openRecipe(act);
-  } else {
-    // Si es correcto y no se ha pesado, abrimos el dial
-    const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
-    openIng(r, i, Number.isNaN(g) ? null : g);
-  }
-} else {
-  openHome();
+function openBake(r) {
+  $("bakeMsg").textContent = REC[r].bMsg;
+  $("bakeBtn").textContent = "Al horno!";
+  $("bakeResult").textContent = ""; 
+  $("bakeBtn").onclick = () => startBaking(r);
+  show("bake", "Horneando...", () => openRecipe(r));
 }
 
+// ---- 5. LÓGICA DE HERRAMIENTAS (Dial y Horno) ----
 function weight(){ return Math.round(acc / 360 * PER_TURN); }
 
 function render(){
@@ -218,7 +199,6 @@ function render(){
   wasOk = ok;
 }
 
-// ---- RETROALIMENTACIÓN ----
 function feedback(){
   try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch(e) {}
   try { $("sw").click(); } catch(e) {}
@@ -230,7 +210,36 @@ function feedback(){
   $("dialWrap").classList.remove("pop"); void $("dialWrap").offsetWidth; $("dialWrap").classList.add("pop");
 }
 
-// ---- DIAL ----
+function startBaking(r) {
+  timeStart = Date.now(); 
+  $("bakeBtn").textContent = "Sacar del horno";
+  $("bakeBtn").onclick = () => stopBaking(r);
+}
+
+function stopBaking(r) {
+  const targetTime = REC[r].bTime; 
+  const elapsed = (Date.now() - timeStart) / 1000;
+  const diff = Math.abs(elapsed - targetTime);
+  
+  let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
+  
+  if (diff <= 2) {
+    msg += "MasterChef 👨‍🍳";
+  } else if (elapsed < targetTime) {
+    msg += "Sigue cruda :/";
+  } else {
+    msg += "Bro... 💀 🚒";
+  }
+  
+  $("bakeResult").innerText = msg;
+  $("bakeBtn").textContent = "Volver al recetario";
+  $("bakeBtn").onclick = () => {
+    setDone(r, []); 
+    openHome();     
+  };
+}
+
+// ---- 6. EVENTOS DEL DIAL (Gestos en pantalla) ----
 const dial = $("dial");
 const angleOf = e => { const b = dial.getBoundingClientRect(); return Math.atan2(e.clientY - b.top - b.height/2, e.clientX - b.left - b.width/2); };
 dial.addEventListener("pointerdown", e => {
@@ -251,56 +260,26 @@ $("okBtn").onclick = () => {
   setDone(cur.r, d); openRecipe(cur.r);
 };
 
-// ---- ARRANQUE NFC ----
+// ---- 7. ARRANQUE NFC (El portero de la app) ----
+// Esto va siempre al final para que todas las funciones anteriores ya existan
 const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
 if (i && ING[i]) {
+  history.replaceState(null, "", location.pathname);
+  
   const act = getActive(), g = parseInt(p.get("g"), 10);
-  if (act && !REC[act].items[i]) openWrong(act, i);
-  else {
+  const done = act ? getDone(act) : []; 
+  
+  if (act && !REC[act].items[i]) {
+    openWrong(act, i);
+  } else if (act && done.includes(i)) {
+    alert("¡Ya pesaste " + ING[i].n + "! Ya está marcado como listo.");
+    openRecipe(act);
+  } else {
     const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
     openIng(r, i, Number.isNaN(g) ? null : g);
   }
-} else openHome();
-
-// ---- LÓGICA DEL HORNO ----
-let timeStart = 0;
-
-function openBake(r) {
-  $("bakeMsg").textContent = REC[r].bMsg;
-  $("bakeBtn").textContent = "Al horno!";
-  $("bakeResult").textContent = ""; 
-  $("bakeBtn").onclick = () => startBaking(r);
-  show("bake", "Horneando...", () => openRecipe(r));
-}
-
-function startBaking(r) {
-  timeStart = Date.now(); 
-  $("bakeBtn").textContent = "Sacar del horno";
-  $("bakeBtn").onclick = () => stopBaking(r);
-}
-
-function stopBaking(r) {
-  const targetTime = REC[r].bTime; // Leemos el tiempo meta desde el diccionario
-  const elapsed = (Date.now() - timeStart) / 1000;
-  const diff = Math.abs(elapsed - targetTime);
-  
-  let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
-  
-  if (diff <= 2) {
-    msg += "MasterChef 👨‍🍳";
-  } else if (elapsed < targetTime) {
-    msg += "Sigue cruda :/";
-  } else {
-    msg += "Bro... 💀 🚒";
-  }
-  
-  $("bakeResult").innerText = msg;
-  $("bakeBtn").textContent = "Volver al recetario";
-  
-  $("bakeBtn").onclick = () => {
-    setDone(r, []); // Borra el progreso de la receta
-    openHome();     // Nos manda a la pantalla inicial
-  };
+} else {
+  openHome();
 }
 </script>
 </body>

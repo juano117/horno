@@ -15,6 +15,7 @@ header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cu
 .grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
 .card .e{font-size:48px}.card small{display:block;opacity:.7}
+#ingGrid .card{cursor:default}
 .card.done{border-color:var(--ok);background:#e6f4d7}
 .msg{margin:18px 0 0;font-size:1.2rem}
 .hint{font-size:1rem;opacity:.8;margin:8px 0 0}
@@ -92,10 +93,9 @@ function openHome(){
 function openRecipe(r){
   const done = getDone(r), items = REC[r].items;
   $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
-    `<button class="card ${done.includes(k) ? "done" : ""}" data-i="${k}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></button>`).join("");
-  $("ingGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openIng(r, c.dataset.i));
+    `<div class="card ${done.includes(k) ? "done" : ""}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></div>`).join("");
   const all = Object.keys(items).every(k => done.includes(k));
-  $("recMsg").textContent = all ? "¡Receta lista! A hornear 🔥" : done.length + " de " + Object.keys(items).length + " ingredientes";
+  $("recMsg").textContent = all ? "¡Receta lista! A hornear 🔥" : done.length + " de " + Object.keys(items).length + " ingredientes · Acerca el sticker de un ingrediente al celular";
   $("reset").onclick = () => { setDone(r, []); openRecipe(r); };
   show("recipe", REC[r].n, openHome);
 }

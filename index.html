@@ -76,10 +76,7 @@
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
 <script>
-// ---- 1. CONFIGURACIÓN Y REDIRECCIÓN ----
-if (location.protocol === "http:" && location.hostname.endsWith("github.io")) {
-  location.replace(location.href.replace("http:", "https:"));
-}
+
 
 // ---- 2. BASES DE DATOS (ING y REC) ----
 const ING = {
@@ -102,7 +99,7 @@ const REC = {
 };
 
 const PER_TURN = 150;  // gramos por vuelta completa del dial
-const TOL = 2;         // tolerancia en gramos
+const TOL = 2;         // tolerancia en gramos (+/- 2g)
 
 // ---- 3. ESTADO GLOBAL DE LA APP ----
 const $ = id => document.getElementById(id);
@@ -216,6 +213,20 @@ function startBaking(r) {
   $("bakeBtn").onclick = () => stopBaking(r);
 }
 
+// ---- BOTÓN LISTO (Asegura el guardado del ingrediente) ----
+$("okBtn").onclick = () => {
+  // 1. Buscamos la receta actual o la recuperamos de la memoria activa
+  const recipeKey = cur.r || getActive();
+  
+  if (recipeKey && cur.i) {
+    const d = getDone(recipeKey);
+    if (!d.includes(cur.i)) d.push(cur.i); // Agregamos el ingrediente a la lista de listos
+    setDone(recipeKey, d);                 // Guardamos en el almacenamiento del celular
+    openRecipe(recipeKey);                 // Regresamos a la pantalla de la receta (¡ya estará verde!)
+  }
+};
+
+// ---- LIMPIEZA AUTOMÁTICA AL TERMINAR EN EL HORNO ----
 function stopBaking(r) {
   const targetTime = REC[r].bTime; 
   const elapsed = (Date.now() - timeStart) / 1000;
@@ -233,9 +244,12 @@ function stopBaking(r) {
   
   $("bakeResult").innerText = msg;
   $("bakeBtn").textContent = "Volver al recetario";
+  
+  // AQUÍ LIMPIAMOS LA MEMORIA:
   $("bakeBtn").onclick = () => {
-    setDone(r, []); 
-    openHome();     
+    setDone(r, []);    // Borra los ingredientes guardados para ESTA receta en específico
+    setActive(null);   // Resetea la receta activa
+    openHome();        // Nos manda a la pantalla principal limpiecitos
   };
 }
 

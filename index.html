@@ -54,6 +54,9 @@ header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cu
   <div class="row"><button class="btn main" id="okBtn" disabled>Listo ✓</button></div>
 </section>
 
+<section class="view" id="wrong"><div style="font-size:64px" id="wrongE"></div><p class="msg" id="wrongT"></p>
+  <div class="row"><button class="btn main" id="wrongBtn">Volver a la receta</button></div></section>
+
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
 <script>
@@ -82,8 +85,12 @@ function show(id, title, back){
   $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
 }
 
+const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
+const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
+
 // ---- PANTALLAS ----
 function openHome(){
+  setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
     `<button class="card" data-r="${k}"><div class="e">${r.e}</div>${r.n}<small>Dificultad: ${r.d}</small></button>`).join("");
   $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
@@ -91,6 +98,7 @@ function openHome(){
 }
 
 function openRecipe(r){
+  setActive(r);
   const done = getDone(r), items = REC[r].items;
   $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
     `<div class="card ${done.includes(k) ? "done" : ""}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></div>`).join("");
@@ -101,12 +109,21 @@ function openRecipe(r){
 }
 
 function openIng(r, i, g){
+  setActive(r);
   cur = {r, i, target: g || REC[r].items[i]};
   const maxW = Math.ceil(cur.target * 1.6 / 10) * 10;
   maxDeg = maxW / PER_TURN * 360; acc = 0; wasOk = false;
   $("target").textContent = cur.target + " g";
   show("ing", ING[i].n, () => openRecipe(r));
   render();
+}
+
+function openWrong(r, i){
+  $("wrongE").textContent = "🚫";
+  $("wrongT").textContent = ING[i].e + " " + ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongBtn").onclick = () => openRecipe(r);
+  try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
+  show("wrong", "¡Ojo!", () => openRecipe(r));
 }
 
 function weight(){ return Math.round(acc / 360 * PER_TURN); }
@@ -159,9 +176,12 @@ $("okBtn").onclick = () => {
 // ---- ARRANQUE: enlace directo desde el sticker NFC (?i=masa&r=pizza&g=300) ----
 const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
 if (i && ING[i]) {
-  const r = REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]);
-  const g = parseInt(p.get("g"), 10);
-  openIng(r, i, Number.isNaN(g) ? null : g);
+  const act = getActive(), g = parseInt(p.get("g"), 10);
+  if (act && !REC[act].items[i]) openWrong(act, i);
+  else {
+    const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
+    openIng(r, i, Number.isNaN(g) ? null : g);
+  }
 } else openHome();
 </script>
 </body>

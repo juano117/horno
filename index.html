@@ -57,6 +57,15 @@ header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cu
 <section class="view" id="wrong"><div style="font-size:64px" id="wrongE"></div><p class="msg" id="wrongT"></p>
   <div class="row"><button class="btn main" id="wrongBtn">Volver a la receta</button></div></section>
 
+  <section class="view" id="bake">
+  <div style="font-size:64px">🍕</div>
+  <p class="msg" id="bakeMsg">Mete la pizza al horno de cartón y cuenta mentalmente 15 segundos.</p>
+  <h2 id="bakeResult" style="margin: 20px 0; color: var(--ok);"></h2>
+  <div class="row">
+    <button class="btn main" id="bakeBtn">Meter al horno 🔥</button>
+  </div>
+</section>
+
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
 <script>
@@ -70,7 +79,7 @@ const REC = {
   pizza:{n:"Pizza de pepperoni",d:"Baja",e:"🍕",items:{masa:300,queso:200,tomate:120,pepperoni:80,semola:50}},
   torta:{n:"Torta de chocolate",d:"Media",e:"🍫",items:{chocolate:200,harina:250,azucar:100}}
 };
-const PER_TURN = 100;  // gramos por vuelta completa del dial
+const PER_TURN = 150;  // gramos por vuelta completa del dial
 const TOL = 2;         // tolerancia en gramos
 
 // ---- ESTADO ----
@@ -102,8 +111,16 @@ function openRecipe(r){
   const done = getDone(r), items = REC[r].items;
   $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
     `<div class="card ${done.includes(k) ? "done" : ""}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></div>`).join("");
+  
   const all = Object.keys(items).every(k => done.includes(k));
-  $("recMsg").textContent = all ? "¡Receta lista! A hornear 🔥" : done.length + " de " + Object.keys(items).length + " ingredientes · Acerca el sticker de un ingrediente al celular";
+  
+  // Si están todos los ingredientes, mostramos el botón para ir a hornear
+  if (all) {
+    $("recMsg").innerHTML = `¡Receta lista! <br><br> <button class="btn main" onclick="openBake()">Ir al horno 🔥</button>`;
+  } else {
+    $("recMsg").textContent = done.length + " de " + Object.keys(items).length + " ingredientes · Acerca el sticker de un ingrediente al celular";
+  }
+  
   $("reset").onclick = () => { setDone(r, []); openRecipe(r); };
   show("recipe", REC[r].n, openHome);
 }
@@ -183,6 +200,44 @@ if (i && ING[i]) {
     openIng(r, i, Number.isNaN(g) ? null : g);
   }
 } else openHome();
+
+let timeStart = 0;
+const BAKE_TIME = 15; // Los segundos que el jugador debe contar
+
+function openBake() {
+  $("bakeMsg").textContent = `Mete la pizza y cuenta mentalmente ${BAKE_TIME} segundos. ¡No hay reloj!`;
+  $("bakeBtn").textContent = "Meter al horno 🔥";
+  $("bakeResult").textContent = ""; // Limpiamos mensajes anteriores
+  $("bakeBtn").onclick = startBaking;
+  show("bake", "Horneando...", () => openRecipe(cur.r || getActive()));
+}
+
+function startBaking() {
+  timeStart = Date.now(); // Guardamos el milisegundo exacto de inicio
+  $("bakeBtn").textContent = "¡Sacar del horno! 🛑";
+  $("bakeBtn").onclick = stopBaking;
+}
+
+function stopBaking() {
+  // Calculamos la diferencia de tiempo convirtiendo milisegundos a segundos
+  const elapsed = (Date.now() - timeStart) / 1000;
+  const diff = Math.abs(elapsed - BAKE_TIME);
+  
+  let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
+  
+  // Evaluamos qué tan cerca estuvo
+  if (diff <= 2) {
+    msg += "¡Perfecto, nivel pizzero máster! 👨‍🍳";
+  } else if (elapsed < BAKE_TIME) {
+    msg += "¡Te adelantaste, la masa sigue cruda! 🥶";
+  } else {
+    msg += "¡Se nos quemó la pizza! 🚒";
+  }
+  
+  $("bakeResult").innerText = msg;
+  $("bakeBtn").textContent = "Volver al recetario";
+  $("bakeBtn").onclick = openHome;
+}
 </script>
 </body>
 </html>

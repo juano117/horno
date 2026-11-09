@@ -79,20 +79,20 @@
 <script>
 //  DATOS 
 const ING = {
-  masa:{n:"Masa para pizza",e:"🫓"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",e:"🍅"},
-  pepperoni:{n:"Pepperoni",e:"🍖"}, semola:{n:"Sémola de trigo",e:"🌾"},
-  chocolate:{n:"Chocolate",e:"🍫"}, harina:{n:"Harina",e:"🌾"}, azucar:{n:"Azúcar",e:"🍬"}
+  masa:{n:"Masa para pizza",img:"imagenes/masa.png"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
+  pepperoni:{n:"Pepperoni",img:"imagenes/pepperoni.png"}, semola:{n:"Sémola de trigo",img:"imagenes/semola.png"},
+  chocolate:{n:"Cocoa",img:"imagenes/cocoa.png"}, harina:{n:"Harina",img:"imagenes/harina.png"}, azucar:{n:"Azúcar",img:"imagenes/azucar.png"}
 };
 
 // RECETAS
 const REC = {
   pizza:{
-    n:"Pizza de pepperoni", d:"Baja", e:"🍕", 
+    n:"Pizza de pepperoni", d:"Baja", img:"imagenes/pizza.png", 
     bMsg:"Mete la pizza al horno de cartón y cuenta mentalmente 15 segundos.", bTime: 15,
     items:{masa:300,queso:200,tomate:120,pepperoni:80,semola:50}
   },
   torta:{
-    n:"Torta de chocolate", d:"Media", e:"🍫", 
+    n:"Torta de chocolate", d:"Media", img:"imagenes/torta.png", 
     bMsg:"Mete el molde de torta al horno y cuenta mentalmente 25 segundos.", bTime: 25,
     items:{chocolate:200,harina:250,azucar:100}
   }
@@ -120,16 +120,19 @@ const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : loc
 function openHome(){
   setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
-    `<button class="card" data-r="${k}"><div class="e">${r.e}</div>${r.n}<small>Dificultad: ${r.d}</small></button>`).join("");
+    // Aquí cambiamos el div por un img que busca la propiedad r.img
+    `<button class="card" data-r="${k}">
+       <img src="${r.img}" class="img-fluida" alt="${r.n}">
+       ${r.n}<small>Dificultad: ${r.d}</small>
+     </button>`
+  ).join("");
   $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
   show("home", "RECETARIO", null);
 }
-
 function openRecipe(r){
   setActive(r);
   const done = getDone(r), items = REC[r].items;
   
-  // ¡Aquí está la magia! Cambiamos el div por el <img> y usamos ING[k].img
   $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
     `<div class="card ${done.includes(k) ? "done" : ""}">
        <img src="${ING[k].img}" class="img-fluida" alt="${ING[k].n}">
@@ -232,7 +235,7 @@ let timeStart = 0;
 
 function openBake(r) {
   $("bakeMsg").textContent = REC[r].bMsg;
-  $("bakeBtn").textContent = "Meter al horno 🔥";
+  $("bakeBtn").textContent = "Al horno!";
   $("bakeResult").textContent = ""; 
   $("bakeBtn").onclick = () => startBaking(r);
   show("bake", "Horneando...", () => openRecipe(r));
@@ -240,7 +243,7 @@ function openBake(r) {
 
 function startBaking(r) {
   timeStart = Date.now(); 
-  $("bakeBtn").textContent = "¡Sacar del horno! 🛑";
+  $("bakeBtn").textContent = "Sacar del horno";
   $("bakeBtn").onclick = () => stopBaking(r);
 }
 
@@ -252,11 +255,11 @@ function stopBaking(r) {
   let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
   
   if (diff <= 2) {
-    msg += "¡Perfecto, quedó en su punto! 👨‍🍳";
+    msg += "MasterChef 👨‍🍳";
   } else if (elapsed < targetTime) {
-    msg += "¡Te adelantaste, sigue cruda! 🥶";
+    msg += "Sigue cruda :/";
   } else {
-    msg += "¡Se nos quemó! 🚒";
+    msg += "Bro... 💀 🚒";
   }
   
   $("bakeResult").innerText = msg;

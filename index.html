@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Horno de recetas</title>
+  <style>
+    :root { --bg: #fffaf2; --text: #2b2118; --muted: #7a6a5a; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1c1612; --text: #f5ebdd; --muted: #a8998a; }
+    }
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; padding: 24px; box-sizing: border-box;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, system-ui, sans-serif;
+      text-align: center;
+    }
+    #emoji { font-size: 96px; }
+    #name { font-size: 2rem; font-weight: 700; margin: 0; }
+    #grams { font-size: 1.25rem; margin: 0; }
+    #status { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="emoji">🍕</div>
+  <h1 id="name">Horno de recetas</h1>
+  <p id="grams"></p>
+  <p id="status">Acerca un sticker al iPhone para empezar</p>
+
+  <script>
+    // 1) Catálogo: la CLAVE debe ser igual al valor "i" de la URL del sticker.
+    const catalog = {
+      harina: { name: "Harina", emoji: "🌾", grams: 250 },
+      tomate: { name: "Tomate", emoji: "🍅", grams: 120 }
+    };
+
+    // 2) Leemos los datos que vienen en la URL: ?i=harina&g=300
+    const params = new URLSearchParams(location.search);
+    const key = (params.get("i") || "").trim().toLowerCase();
+    const gramsFromSticker = parseInt(params.get("g"), 10);
+
+    // 3) Si hay ingrediente, pintamos la pantalla.
+    if (key) {
+      const base = catalog[key];
+      if (base) {
+        // El peso del sticker manda; si no hay, usamos el del catálogo.
+        const grams = Number.isNaN(gramsFromSticker) ? base.grams : gramsFromSticker;
+        document.getElementById("emoji").textContent = base.emoji;
+        document.getElementById("name").textContent = base.name;
+        document.getElementById("grams").textContent = "Necesitas " + grams + " g";
+        document.getElementById("status").textContent = "Leído: " + key;
+      } else {
+        document.getElementById("emoji").textContent = "❓";
+        document.getElementById("name").textContent = "Sticker desconocido";
+        document.getElementById("status").textContent = "No existe: " + key;
+      }
+    }
+  </script>
+</body>
+</html>

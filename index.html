@@ -1,63 +1,168 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Horno de recetas</title>
-  <style>
-    :root { --bg: #fffaf2; --text: #2b2118; --muted: #7a6a5a; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #1c1612; --text: #f5ebdd; --muted: #a8998a; }
-    }
-    body {
-      margin: 0; min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 12px; padding: 24px; box-sizing: border-box;
-      background: var(--bg); color: var(--text);
-      font-family: -apple-system, system-ui, sans-serif;
-      text-align: center;
-    }
-    #emoji { font-size: 96px; }
-    #name { font-size: 2rem; font-weight: 700; margin: 0; }
-    #grams { font-size: 1.25rem; margin: 0; }
-    #status { color: var(--muted); font-size: 0.9rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recetario</title>
+<style>
+:root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
+header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
+header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
+header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
+.view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
+.grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
+.card .e{font-size:48px}.card small{display:block;opacity:.7}
+.card.done{border-color:var(--ok);background:#e6f4d7}
+.msg{margin:18px 0 0;font-size:1.2rem}
+.hint{font-size:1rem;opacity:.8;margin:8px 0 0}
+#dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
+#ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
+#dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
+ background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
+#knob{position:absolute;inset:0;border-radius:50%}
+#knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
+#w{font-size:3rem;font-weight:700;margin:0}
+#w.ok{color:var(--ok)}
+.row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
+.btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
+.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
+</style>
 </head>
 <body>
-  <div id="emoji">🍕</div>
-  <h1 id="name">Horno de recetas</h1>
-  <p id="grams"></p>
-  <p id="status">Acerca un sticker al iPhone para empezar</p>
+<header><button id="back" hidden>‹</button><h1 id="title">RECETARIO</h1><span style="width:36px"></span></header>
 
-  <script>
-    // 1) Catálogo: la CLAVE debe ser igual al valor "i" de la URL del sticker.
-    const catalog = {
-      harina: { name: "Harina", emoji: "🌾", grams: 250 },
-      tomate: { name: "Tomate", emoji: "🍅", grams: 120 }
-    };
+<section class="view on" id="home"><div class="grid" id="homeGrid"></div></section>
 
-    // 2) Leemos los datos que vienen en la URL: ?i=harina&g=300
-    const params = new URLSearchParams(location.search);
-    const key = (params.get("i") || "").trim().toLowerCase();
-    const gramsFromSticker = parseInt(params.get("g"), 10);
+<section class="view" id="recipe"><div class="grid" id="ingGrid"></div><p class="msg" id="recMsg"></p>
+  <div class="row"><button class="btn" id="reset">Reiniciar receta</button></div></section>
 
-    // 3) Si hay ingrediente, pintamos la pantalla.
-    if (key) {
-      const base = catalog[key];
-      if (base) {
-        // El peso del sticker manda; si no hay, usamos el del catálogo.
-        const grams = Number.isNaN(gramsFromSticker) ? base.grams : gramsFromSticker;
-        document.getElementById("emoji").textContent = base.emoji;
-        document.getElementById("name").textContent = base.name;
-        document.getElementById("grams").textContent = "Necesitas " + grams + " g";
-        document.getElementById("status").textContent = "Leído: " + key;
-      } else {
-        document.getElementById("emoji").textContent = "❓";
-        document.getElementById("name").textContent = "Sticker desconocido";
-        document.getElementById("status").textContent = "No existe: " + key;
-      }
-    }
-  </script>
+<section class="view" id="ing">
+  <p class="hint">Gira el dial hasta llegar al peso indicado.</p>
+  <p class="msg">Necesitas: <b id="target"></b></p>
+  <div id="dialWrap">
+    <svg id="ringSvg" viewBox="0 0 240 240"><circle cx="120" cy="120" r="112" fill="none" stroke="#0002" stroke-width="8"/>
+      <circle id="prog" cx="120" cy="120" r="112" fill="none" stroke="var(--ring)" stroke-width="8" stroke-linecap="round"/></svg>
+    <div id="dial"><div id="knob"></div></div>
+  </div>
+  <p id="w">0 g</p>
+  <div class="row"><button class="btn" id="minus">−1 g</button><button class="btn" id="plus">+1 g</button></div>
+  <div class="row"><button class="btn main" id="okBtn" disabled>Listo ✓</button></div>
+</section>
+
+<label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
+
+<script>
+// ---- DATOS (edítalos aquí) ----
+const ING = {
+  masa:{n:"Masa para pizza",e:"🫓"}, queso:{n:"Queso mozzarella",e:"🧀"}, tomate:{n:"Tomates",e:"🍅"},
+  pepperoni:{n:"Pepperoni",e:"🍖"}, semola:{n:"Sémola de trigo",e:"🌾"},
+  chocolate:{n:"Chocolate",e:"🍫"}, harina:{n:"Harina",e:"🌾"}, azucar:{n:"Azúcar",e:"🍬"}
+};
+const REC = {
+  pizza:{n:"Pizza de pepperoni",d:"Baja",e:"🍕",items:{masa:300,queso:200,tomate:120,pepperoni:80,semola:50}},
+  torta:{n:"Torta de chocolate",d:"Media",e:"🍫",items:{chocolate:200,harina:250,azucar:100}}
+};
+const PER_TURN = 100;  // gramos por vuelta completa del dial
+const TOL = 2;         // tolerancia en gramos
+
+// ---- ESTADO ----
+const $ = id => document.getElementById(id);
+let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
+
+const getDone = r => { try { return JSON.parse(localStorage.getItem("horno:" + r)) || []; } catch(e) { return []; } };
+const setDone = (r, a) => { try { localStorage.setItem("horno:" + r, JSON.stringify(a)); } catch(e) {} };
+
+function show(id, title, back){
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
+  $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
+}
+
+// ---- PANTALLAS ----
+function openHome(){
+  $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
+    `<button class="card" data-r="${k}"><div class="e">${r.e}</div>${r.n}<small>Dificultad: ${r.d}</small></button>`).join("");
+  $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
+  show("home", "RECETARIO", null);
+}
+
+function openRecipe(r){
+  const done = getDone(r), items = REC[r].items;
+  $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
+    `<button class="card ${done.includes(k) ? "done" : ""}" data-i="${k}"><div class="e">${ING[k].e}</div>${ING[k].n}<small>${done.includes(k) ? "✓ Listo" : g + " g"}</small></button>`).join("");
+  $("ingGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openIng(r, c.dataset.i));
+  const all = Object.keys(items).every(k => done.includes(k));
+  $("recMsg").textContent = all ? "¡Receta lista! A hornear 🔥" : done.length + " de " + Object.keys(items).length + " ingredientes";
+  $("reset").onclick = () => { setDone(r, []); openRecipe(r); };
+  show("recipe", REC[r].n, openHome);
+}
+
+function openIng(r, i, g){
+  cur = {r, i, target: g || REC[r].items[i]};
+  const maxW = Math.ceil(cur.target * 1.6 / 10) * 10;
+  maxDeg = maxW / PER_TURN * 360; acc = 0; wasOk = false;
+  $("target").textContent = cur.target + " g";
+  show("ing", ING[i].n, () => openRecipe(r));
+  render();
+}
+
+function weight(){ return Math.round(acc / 360 * PER_TURN); }
+
+function render(){
+  const w = weight(), ok = Math.abs(w - cur.target) <= TOL, C = 2 * Math.PI * 112;
+  $("w").textContent = w + " g"; $("w").classList.toggle("ok", ok);
+  $("knob").style.transform = "rotate(" + acc + "deg)";
+  $("prog").style.strokeDasharray = C;
+  $("prog").style.strokeDashoffset = C * (1 - Math.min(w / cur.target, 1));
+  $("prog").style.stroke = ok ? "var(--ok)" : "var(--ring)";
+  $("okBtn").disabled = !ok;
+  if (ok && !wasOk) feedback();
+  wasOk = ok;
+}
+
+// ---- RETROALIMENTACIÓN: vibración (Android), "switch" háptico (iOS, experimental) y sonido ----
+function feedback(){
+  try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch(e) {}
+  try { $("sw").click(); } catch(e) {}
+  try {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = 880; g.gain.value = .08; o.connect(g); g.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + .15);
+  } catch(e) {}
+  $("dialWrap").classList.remove("pop"); void $("dialWrap").offsetWidth; $("dialWrap").classList.add("pop");
+}
+
+// ---- DIAL: arrastrar en círculo ----
+const dial = $("dial");
+const angleOf = e => { const b = dial.getBoundingClientRect(); return Math.atan2(e.clientY - b.top - b.height/2, e.clientX - b.left - b.width/2); };
+dial.addEventListener("pointerdown", e => {
+  dial.setPointerCapture(e.pointerId); last = angleOf(e);
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch(err) {}
+});
+dial.addEventListener("pointermove", e => {
+  if (!dial.hasPointerCapture(e.pointerId)) return;
+  const a = angleOf(e); let d = a - last;
+  if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+  acc = Math.min(Math.max(acc + d * 180 / Math.PI, 0), maxDeg); last = a; render();
+});
+const nudge = g => { acc = Math.min(Math.max(acc + g / PER_TURN * 360, 0), maxDeg); render(); };
+$("minus").onclick = () => nudge(-1); $("plus").onclick = () => nudge(1);
+
+$("okBtn").onclick = () => {
+  const d = getDone(cur.r); if (!d.includes(cur.i)) d.push(cur.i);
+  setDone(cur.r, d); openRecipe(cur.r);
+};
+
+// ---- ARRANQUE: enlace directo desde el sticker NFC (?i=masa&r=pizza&g=300) ----
+const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
+if (i && ING[i]) {
+  const r = REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]);
+  const g = parseInt(p.get("g"), 10);
+  openIng(r, i, Number.isNaN(g) ? null : g);
+} else openHome();
+</script>
 </body>
 </html>

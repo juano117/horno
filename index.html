@@ -77,6 +77,10 @@
 
 
 <script>
+  if (location.protocol === "http:" && location.hostname.endsWith("github.io")) {
+  location.replace(location.href.replace("http:", "https:"));
+}
+
 //  DATOS 
 const ING = {
   masa:{n:"Masa para pizza",img:"imagenes/masa.png"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
@@ -165,8 +169,8 @@ function openIng(r, i, g){
 }
 
 function openWrong(r, i){
-  $("wrongE").textContent = "🚫";
-  $("wrongT").textContent = ING[i].e + " " + ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongE").innerHTML = `<img src="${ING[i].img}" class="img-fluida" alt="">`;
+  $("wrongT").textContent = "🚫 " + ING[i].n + " no se necesita en " + REC[r].n + ".";
   $("wrongBtn").onclick = () => openRecipe(r);
   try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
   show("wrong", "??", () => openRecipe(r));

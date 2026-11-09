@@ -1,39 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Recetario</title>
-<style>
-:root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
-header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
-header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
-header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
-.view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
-.grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
-.card .e{font-size:48px}.card small{display:block;opacity:.7}
-#ingGrid .card{cursor:default}
-.card.done{border-color:var(--ok);background:#e6f4d7}
-.msg{margin:18px 0 0;font-size:1.2rem}
-.hint{font-size:1rem;opacity:.8;margin:8px 0 0}
-#dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
-#ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
-#dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
- background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
-#knob{position:absolute;inset:0;border-radius:50%}
-#knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
-#w{font-size:3rem;font-weight:700;margin:0}
-#w.ok{color:var(--ok)}
-.row{display:flex;gap:10px;justify-content:center;margin-top:12px}
-.btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
-.btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
-.pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
-</style>
-</head>
-<body>
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Recetario</title>
+    <style>
+    :root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
+    header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
+    header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
+    header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
+    .view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
+    .grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+    .card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
+    .card .e{font-size:48px}.card small{display:block;opacity:.7}
+    #ingGrid .card{cursor:default}
+    .card.done{border-color:var(--ok);background:#e6f4d7}
+    .msg{margin:18px 0 0;font-size:1.2rem}
+    .hint{font-size:1rem;opacity:.8;margin:8px 0 0}
+    #dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
+    #ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
+    #dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
+    background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
+    #knob{position:absolute;inset:0;border-radius:50%}
+    #knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
+    #w{font-size:3rem;font-weight:700;margin:0}
+    #w.ok{color:var(--ok)}
+    .row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+    .btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
+    .btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
+    .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
+    .img-fluida {
+    width: 100%;         /* Toma todo el ancho disponible de la tarjeta */
+    height: 65px;        /* Altura fija para que todas las tarjetas se alineen parejas */
+    object-fit: contain; /* Evita que la imagen se aplaste o se estire */
+    margin-bottom: 8px;
+   }
+    </style>
+  </head>
+  <body>
+
 <header><button id="back" hidden>‹</button><h1 id="title">RECETARIO</h1><span style="width:36px"></span></header>
 
 <section class="view on" id="home"><div class="grid" id="homeGrid"></div></section>
@@ -62,21 +69,23 @@ header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cu
   <p class="msg" id="bakeMsg"></p>
   <h2 id="bakeResult" style="margin: 20px 0; color: var(--ok);"></h2>
   <div class="row">
-    <button class="btn main" id="bakeBtn">Meter al horno 🔥</button>
+    <button class="btn main" id="bakeBtn">Meter al horno</button>
   </div>
 </section>
 
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
+
+// JAVASCRIPT - INTERACCIÓN
 <script>
-// ---- DATOS (edítalos aquí) ----
+//  DATOS 
 const ING = {
-  masa:{n:"Masa para pizza",e:"🫓"}, queso:{n:"Queso mozzarella",e:"🧀"}, tomate:{n:"Tomates",e:"🍅"},
+  masa:{n:"Masa para pizza",e:"🫓"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",e:"🍅"},
   pepperoni:{n:"Pepperoni",e:"🍖"}, semola:{n:"Sémola de trigo",e:"🌾"},
   chocolate:{n:"Chocolate",e:"🍫"}, harina:{n:"Harina",e:"🌾"}, azucar:{n:"Azúcar",e:"🍬"}
 };
 
-// Se agregó bMsg (texto) y bTime (segundos) a cada receta
+// RECETAS
 const REC = {
   pizza:{
     n:"Pizza de pepperoni", d:"Baja", e:"🍕", 
@@ -93,7 +102,7 @@ const REC = {
 const PER_TURN = 150;  // gramos por vuelta completa del dial
 const TOL = 2;         // tolerancia en gramos
 
-// ---- ESTADO ----
+// ESTADO 
 const $ = id => document.getElementById(id);
 let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
 
@@ -108,7 +117,7 @@ function show(id, title, back){
 const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
 const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
 
-// ---- PANTALLAS ----
+// PANTALLAS 
 function openHome(){
   setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
@@ -151,7 +160,7 @@ function openWrong(r, i){
   $("wrongT").textContent = ING[i].e + " " + ING[i].n + " no se necesita en " + REC[r].n + ".";
   $("wrongBtn").onclick = () => openRecipe(r);
   try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
-  show("wrong", "¡Ojo!", () => openRecipe(r));
+  show("wrong", "??", () => openRecipe(r));
 }
 
 function weight(){ return Math.round(acc / 360 * PER_TURN); }

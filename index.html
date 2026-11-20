@@ -37,6 +37,7 @@
     object-fit: contain; /* Evita que la imagen se aplaste o se estire */
     margin-bottom: 8px;
    }
+    #dbg{font:12px/1.4 monospace;text-align:left;white-space:pre-wrap;word-break:break-all;padding:10px 16px;opacity:.7;-webkit-user-select:text;user-select:text}
     </style>
   </head>
   <body>
@@ -73,6 +74,8 @@
   </div>
 </section>
 
+<div id="dbg" hidden></div>
+
 <label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
 
 
@@ -101,26 +104,57 @@ const REC = {
 const PER_TURN = 150;  // gramos por vuelta completa del dial
 const TOL = 2;         // tolerancia en gramos
 
+// ---- MEMORIA (UN SOLO "CUADERNO" GUARDADO EN 3 LUGARES) ----
+// Cada vez que el NFC abre la página, el JS arranca de cero. Por eso guardamos
+// TODO el estado (receta activa + ingredientes listos) en un solo objeto y lo
+// copiamos en localStorage, cookie y window.name. Al cargar, usamos la copia más reciente.
+const KEY = "horno_state", MAX_AGE = 30 * 60 * 1000; // si pasan 30 min sin actividad, se reinicia
+let srcs = [];  // de dónde se pudo leer el estado (para depurar)
+
+function loadState(){
+  const c = [];
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) { s._src = "localStorage"; c.push(s); } } catch(e) {}
+  try {
+    const m = document.cookie.split("; ").find(x => x.startsWith(KEY + "="));
+    if (m) { const s = JSON.parse(decodeURIComponent(m.slice(KEY.length + 1))); s._src = "cookie"; c.push(s); }
+  } catch(e) {}
+  try {
+    if (window.name.startsWith(KEY + ":")) { const s = JSON.parse(window.name.slice(KEY.length + 1)); s._src = "window.name"; c.push(s); }
+  } catch(e) {}
+  srcs = c.map(s => s._src);
+  const best = c.filter(s => s && typeof s.t === "number").sort((a, b) => b.t - a.t)[0];
+  if (!best || Date.now() - best.t > MAX_AGE) return { t: Date.now(), active: null, done: {} };
+  return { t: best.t, active: best.active || null, done: best.done || {} };
+}
+
+function saveState(){
+  S.t = Date.now();
+  const json = JSON.stringify(S);
+  try { localStorage.setItem(KEY, json); } catch(e) {}
+  try { document.cookie = KEY + "=" + encodeURIComponent(json) + "; max-age=3600; path=/; SameSite=Lax"; } catch(e) {}
+  try { window.name = KEY + ":" + json; } catch(e) {}
+}
+
+const S = loadState();
+
+const getDone = r => S.done[r] || [];
+const setDone = (r, a) => { S.done[r] = a; saveState(); };
+const getActive = () => REC[S.active] ? S.active : null;
+const setActive = r => { S.active = r || null; saveState(); };
+
 // ESTADO 
 const $ = id => document.getElementById(id);
 let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
-
-const getDone = r => { try { return JSON.parse(localStorage.getItem("horno:" + r)) || []; } catch(e) { return []; } };
-const setDone = (r, a) => { try { localStorage.setItem("horno:" + r, JSON.stringify(a)); } catch(e) {} };
 
 function show(id, title, back){
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
   $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
 }
 
-const getActive = () => { try { const a = localStorage.getItem("horno_active"); return REC[a] ? a : null; } catch(e) { return null; } };
-const setActive = r => { try { r ? localStorage.setItem("horno_active", r) : localStorage.removeItem("horno_active"); } catch(e) {} };
-
 // PANTALLAS 
 function openHome(){
   setActive(null);
   $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
-    // Aquí cambiamos el div por un img que busca la propiedad r.img
     `<button class="card" data-r="${k}">
        <img src="${r.img}" class="img-fluida" alt="${r.n}">
        ${r.n}<small>Dificultad: ${r.d}</small>
@@ -164,9 +198,10 @@ function openIng(r, i, g){
   render();
 }
 
+// Ingrediente que NO pertenece a la receta activa: se bloquea y NO se cambia el estado
 function openWrong(r, i){
   $("wrongE").textContent = "🚫";
-  $("wrongT").textContent = ING[i].e + " " + ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongT").textContent = ING[i].n + " no se necesita en " + REC[r].n + ".";
   $("wrongBtn").onclick = () => openRecipe(r);
   try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
   show("wrong", "??", () => openRecipe(r));
@@ -215,7 +250,7 @@ const nudge = g => { acc = Math.min(Math.max(acc + g / PER_TURN * 360, 0), maxDe
 $("minus").onclick = () => nudge(-1); $("plus").onclick = () => nudge(1);
 
 $("okBtn").onclick = () => {
-  const d = getDone(cur.r); if (!d.includes(cur.i)) d.push(cur.i);
+  const d = getDone(cur.r).slice(); if (!d.includes(cur.i)) d.push(cur.i);
   setDone(cur.r, d); openRecipe(cur.r);
 };
 
@@ -223,12 +258,22 @@ $("okBtn").onclick = () => {
 const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
 if (i && ING[i]) {
   const act = getActive(), g = parseInt(p.get("g"), 10);
-  if (act && !REC[act].items[i]) openWrong(act, i);
+  if (act && !REC[act].items[i]) openWrong(act, i);   // hay receta activa y el ingrediente no es de ella -> bloquear
   else {
     const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
     openIng(r, i, Number.isNaN(g) ? null : g);
   }
-} else openHome();
+} else {
+  // Sin ingrediente en la URL: si había una receta en curso, volver a ella; si no, inicio
+  const act = getActive();
+  act ? openRecipe(act) : openHome();
+}
+
+// ---- DEPURACIÓN: abre la página con ?debug=1 para ver qué memoria funciona ----
+if (p.get("debug")) {
+  const d = $("dbg"); d.hidden = false;
+  d.textContent = "Leído de: " + (srcs.join(", ") || "NADA (memoria vacía al cargar)") + "\nEstado: " + JSON.stringify(S);
+}
 
 // ---- LÓGICA DEL HORNO ----
 let timeStart = 0;

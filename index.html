@@ -82,7 +82,8 @@
 <script>
 //  DATOS 
 const ING = {
-  masa:{n:"Masa para pizza",img:"imagenes/masa.png"}, queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
+  agua:{n:"Agua",img:"imagenes/agua.png"}, huevo:{n:"Huevo",img:"imagenes/huevo.png"},
+  queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
   pepperoni:{n:"Pepperoni",img:"imagenes/pepperoni.png"}, semola:{n:"Sémola de trigo",img:"imagenes/semola.png"},
   chocolate:{n:"Cocoa",img:"imagenes/cocoa.png"}, harina:{n:"Harina",img:"imagenes/harina.png"}, azucar:{n:"Azúcar",img:"imagenes/azucar.png"}
 };
@@ -92,7 +93,7 @@ const REC = {
   pizza:{
     n:"Pizza de pepperoni", d:"Baja", img:"imagenes/pizza.png", 
     bMsg:"Mete la pizza al horno de cartón y cuenta mentalmente 15 segundos.", bTime: 15,
-    items:{masa:300,queso:200,tomate:120,pepperoni:80,semola:50}
+    items:{harina:180,agua:120,huevo:50,queso:200,tomate:120,pepperoni:80,semola:50}
   },
   torta:{
     n:"Torta de chocolate", d:"Media", img:"imagenes/torta.png", 
@@ -202,9 +203,20 @@ function openIng(r, i, g){
 function openWrong(r, i){
   $("wrongE").textContent = "🚫";
   $("wrongT").textContent = ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongBtn").textContent = "Volver a la receta";
   $("wrongBtn").onclick = () => openRecipe(r);
   try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
   show("wrong", "??", () => openRecipe(r));
+}
+
+// Ingrediente escaneado SIN receta abierta: se bloquea, hay que elegir receta primero
+function openNoRecipe(){
+  $("wrongE").textContent = "👆";
+  $("wrongT").textContent = "Primero elige una receta en el recetario.";
+  $("wrongBtn").textContent = "Ir al recetario";
+  $("wrongBtn").onclick = openHome;
+  try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
+  show("wrong", "RECETARIO", null);
 }
 
 function weight(){ return Math.round(acc / 360 * PER_TURN); }
@@ -257,12 +269,10 @@ $("okBtn").onclick = () => {
 // ---- ARRANQUE NFC ----
 const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
 if (i && ING[i]) {
-  const act = getActive(), g = parseInt(p.get("g"), 10);
-  if (act && !REC[act].items[i]) openWrong(act, i);   // hay receta activa y el ingrediente no es de ella -> bloquear
-  else {
-    const r = act || (REC[p.get("r")] ? p.get("r") : Object.keys(REC).find(k => REC[k].items[i]));
-    openIng(r, i, Number.isNaN(g) ? null : g);
-  }
+  const act = getActive();
+  if (!act) openNoRecipe();                         // sin receta abierta -> bloquear, hay que elegir receta primero
+  else if (!REC[act].items[i]) openWrong(act, i);   // el ingrediente no es de la receta abierta -> bloquear y quedarse en ella
+  else openIng(act, i, null);                       // el peso sale de la receta abierta (la harina pesa distinto en cada una)
 } else {
   // Sin ingrediente en la URL: si había una receta en curso, volver a ella; si no, inicio
   const act = getActive();

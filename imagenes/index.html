@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Recetario</title>
+    <style>
+    :root{--paper:#fdf3bd;--ink:#2b2118;--ok:#2e8b57;--ring:#b5651d}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;min-height:100vh;-webkit-user-select:none;user-select:none}
+    header{background:repeating-linear-gradient(45deg,#3b2a20 0 6px,#46342a 6px 12px);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;gap:8px}
+    header h1{margin:0;font-size:1.4rem;flex:1;text-align:center}
+    header button{background:none;border:0;color:#fff;font-size:1.8rem;width:36px;cursor:pointer}
+    .view{display:none;padding:24px 16px;text-align:center}.view.on{display:block}
+    .grid{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+    .card{font:inherit;color:inherit;background:#fff9d8;border:1px solid #d9c98a;border-radius:14px;padding:14px 10px;width:150px;cursor:pointer}
+    .card .e{font-size:48px}.card small{display:block;opacity:.7}
+    #ingGrid .card{cursor:default}
+    .card.done{border-color:var(--ok);background:#e6f4d7}
+    .msg{margin:18px 0 0;font-size:1.2rem}
+    .hint{font-size:1rem;opacity:.8;margin:8px 0 0}
+    #dialWrap{position:relative;width:240px;height:240px;margin:20px auto}
+    #ringSvg{position:absolute;inset:0;transform:rotate(-90deg)}
+    #dial{position:absolute;inset:20px;border-radius:50%;touch-action:none;cursor:grab;
+    background:conic-gradient(#eee,#9a9a9a,#f4f4f4,#8c8c8c,#eee);box-shadow:0 6px 14px #0004}
+    #knob{position:absolute;inset:0;border-radius:50%}
+    #knob::after{content:"";position:absolute;top:10px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0006}
+    #w{font-size:3rem;font-weight:700;margin:0}
+    #w.ok{color:var(--ok)}
+    .row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+    .btn{font:inherit;font-size:1.2rem;padding:10px 20px;border-radius:999px;border:1px solid #3b2a20;background:#fff9d8;color:inherit;cursor:pointer}
+    .btn.main{background:#3b2a20;color:#fff}.btn:disabled{opacity:.35}
+    .pop{animation:pop .4s}@keyframes pop{50%{transform:scale(1.06)}}
+    .img-fluida {
+    width: 100%;         /* Toma todo el ancho disponible de la tarjeta */
+    height: 65px;        /* Altura fija para que todas las tarjetas se alineen parejas */
+    object-fit: contain; /* Evita que la imagen se aplaste o se estire */
+    margin-bottom: 8px;
+   }
+    #dbg{font:12px/1.4 monospace;text-align:left;white-space:pre-wrap;word-break:break-all;padding:10px 16px;opacity:.7;-webkit-user-select:text;user-select:text}
+    </style>
+  </head>
+  <body>
+
+<header><button id="back" hidden>‹</button><h1 id="title">RECETARIO</h1><span style="width:36px"></span></header>
+
+<section class="view on" id="home"><div class="grid" id="homeGrid"></div></section>
+
+<section class="view" id="recipe"><div class="grid" id="ingGrid"></div><p class="msg" id="recMsg"></p>
+  <div class="row"><button class="btn" id="reset">Reiniciar receta</button></div></section>
+
+<section class="view" id="ing">
+  <p class="hint">Gira el dial hasta llegar al peso indicado.</p>
+  <p class="msg">Necesitas: <b id="target"></b></p>
+  <div id="dialWrap">
+    <svg id="ringSvg" viewBox="0 0 240 240"><circle cx="120" cy="120" r="112" fill="none" stroke="#0002" stroke-width="8"/>
+      <circle id="prog" cx="120" cy="120" r="112" fill="none" stroke="var(--ring)" stroke-width="8" stroke-linecap="round"/></svg>
+    <div id="dial"><div id="knob"></div></div>
+  </div>
+  <p id="w">0 g</p>
+  <div class="row"><button class="btn" id="minus">−1 g</button><button class="btn" id="plus">+1 g</button></div>
+  <div class="row"><button class="btn main" id="okBtn" disabled>Listo ✓</button></div>
+</section>
+
+<section class="view" id="wrong"><div style="font-size:64px" id="wrongE"></div><p class="msg" id="wrongT"></p>
+  <div class="row"><button class="btn main" id="wrongBtn">Volver a la receta</button></div></section>
+
+<section class="view" id="bake">
+  <div style="font-size:64px">🔥</div>
+  <p class="msg" id="bakeMsg"></p>
+  <h2 id="bakeResult" style="margin: 20px 0; color: var(--ok);"></h2>
+  <div class="row">
+    <button class="btn main" id="bakeBtn">Meter al horno</button>
+  </div>
+</section>
+
+<div id="dbg" hidden></div>
+
+<label id="sw" style="position:absolute;opacity:0;pointer-events:none"><input type="checkbox" switch></label>
+
+
+<script>
+//  DATOS 
+const ING = {
+  agua:{n:"Agua",img:"imagenes/agua.png"}, huevo:{n:"Huevo",img:"imagenes/huevo.png"},
+  queso:{n:"Queso mozzarella",img:"imagenes/queso.png"}, tomate:{n:"Tomates",img:"imagenes/tomates.png"},
+  pepperoni:{n:"Pepperoni",img:"imagenes/pepperoni.png"}, semola:{n:"Sémola de trigo",img:"imagenes/semola.png"},
+  chocolate:{n:"Cocoa",img:"imagenes/cocoa.png"}, harina:{n:"Harina",img:"imagenes/harina.png"}, azucar:{n:"Azúcar",img:"imagenes/azucar.png"},
+  leche:{n:"Leche",img:"imagenes/leche.png"}, aceite:{n:"Aceite",img:"imagenes/aceite.png"},
+  bicarbonato:{n:"Bicarbonato",img:"imagenes/bicarbonato.png"}, polvo:{n:"Polvo para hornear",img:"imagenes/polvo.png"}
+};
+
+// RECETAS
+const REC = {
+  pizza:{
+    n:"Pizza de pepperoni", d:"Baja", img:"imagenes/pizza.png", 
+    bMsg:"Mete la pizza al horno de cartón y cuenta mentalmente 15 segundos.", bTime: 15,
+    items:{harina:180,agua:120,huevo:50,queso:200,tomate:120,pepperoni:80,semola:50}
+  },
+  torta:{
+    n:"Torta de chocolate", d:"Media", img:"imagenes/torta.png", 
+    bMsg:"Mete el molde de torta al horno y cuenta mentalmente 18 segundos.", bTime: 18,
+    items:{chocolate:200,harina:250,azucar:100,leche:240,aceite:80,bicarbonato:5,polvo:10}
+  }
+};
+
+const PER_TURN = 150;  // gramos por vuelta completa del dial
+const TOL = 2;         // tolerancia en gramos
+
+// ---- MEMORIA (UN SOLO "CUADERNO" GUARDADO EN 3 LUGARES) ----
+// Cada vez que el NFC abre la página, el JS arranca de cero. Por eso guardamos
+// TODO el estado (receta activa + ingredientes listos) en un solo objeto y lo
+// copiamos en localStorage, cookie y window.name. Al cargar, usamos la copia más reciente.
+const KEY = "horno_state", MAX_AGE = 30 * 60 * 1000; // si pasan 30 min sin actividad, se reinicia
+let srcs = [];  // de dónde se pudo leer el estado (para depurar)
+
+function loadState(){
+  const c = [];
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) { s._src = "localStorage"; c.push(s); } } catch(e) {}
+  try {
+    const m = document.cookie.split("; ").find(x => x.startsWith(KEY + "="));
+    if (m) { const s = JSON.parse(decodeURIComponent(m.slice(KEY.length + 1))); s._src = "cookie"; c.push(s); }
+  } catch(e) {}
+  try {
+    if (window.name.startsWith(KEY + ":")) { const s = JSON.parse(window.name.slice(KEY.length + 1)); s._src = "window.name"; c.push(s); }
+  } catch(e) {}
+  srcs = c.map(s => s._src);
+  const best = c.filter(s => s && typeof s.t === "number").sort((a, b) => b.t - a.t)[0];
+  if (!best || Date.now() - best.t > MAX_AGE) return { t: Date.now(), active: null, done: {} };
+  return { t: best.t, active: best.active || null, done: best.done || {} };
+}
+
+function saveState(){
+  S.t = Date.now();
+  const json = JSON.stringify(S);
+  try { localStorage.setItem(KEY, json); } catch(e) {}
+  try { document.cookie = KEY + "=" + encodeURIComponent(json) + "; max-age=3600; path=/; SameSite=Lax"; } catch(e) {}
+  try { window.name = KEY + ":" + json; } catch(e) {}
+}
+
+const S = loadState();
+
+const getDone = r => S.done[r] || [];
+const setDone = (r, a) => { S.done[r] = a; saveState(); };
+const getActive = () => REC[S.active] ? S.active : null;
+const setActive = r => { S.active = r || null; saveState(); };
+
+// ESTADO 
+const $ = id => document.getElementById(id);
+let cur = {r:null,i:null,target:0}, acc = 0, maxDeg = 0, wasOk = false, last = 0, ac;
+
+function show(id, title, back){
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
+  $("title").textContent = title; $("back").hidden = !back; $("back").onclick = back || null;
+}
+
+// PANTALLAS 
+function openHome(){
+  setActive(null);
+  $("homeGrid").innerHTML = Object.entries(REC).map(([k,r]) =>
+    `<button class="card" data-r="${k}">
+       <img src="${r.img}" class="img-fluida" alt="${r.n}">
+       ${r.n}<small>Dificultad: ${r.d}</small>
+     </button>`
+  ).join("");
+  $("homeGrid").querySelectorAll(".card").forEach(c => c.onclick = () => openRecipe(c.dataset.r));
+  show("home", "RECETARIO", null);
+}
+function openRecipe(r){
+  setActive(r);
+  const done = getDone(r), items = REC[r].items;
+  
+  $("ingGrid").innerHTML = Object.entries(items).map(([k,g]) =>
+    `<div class="card ${done.includes(k) ? "done" : ""}">
+       <img src="${ING[k].img}" class="img-fluida" alt="${ING[k].n}">
+       ${ING[k].n}
+       <small>${done.includes(k) ? "✓ Listo" : g + " g"}</small>
+     </div>`
+  ).join("");
+  
+  const all = Object.keys(items).every(k => done.includes(k));
+  
+  // Si están todos los ingredientes, mostramos el botón para ir a hornear
+  if (all) {
+    $("recMsg").innerHTML = `Receta lista :) <br><br> <button class="btn main" onclick="openBake('${r}')">Al horno! 🔥</button>`;
+  } else {
+    $("recMsg").textContent = done.length + " de " + Object.keys(items).length + " ingredientes · Acerca un ingrediente";
+  }
+  
+  $("reset").onclick = () => { setDone(r, []); openRecipe(r); };
+  show("recipe", REC[r].n, openHome);
+}
+
+function openIng(r, i, g){
+  setActive(r);
+  cur = {r, i, target: g || REC[r].items[i]};
+  const maxW = Math.ceil(cur.target * 1.6 / 10) * 10;
+  maxDeg = maxW / PER_TURN * 360; acc = 0; wasOk = false;
+  $("target").textContent = cur.target + " g";
+  show("ing", ING[i].n, () => openRecipe(r));
+  render();
+}
+
+// Ingrediente que NO pertenece a la receta activa: se bloquea y NO se cambia el estado
+function openWrong(r, i){
+  $("wrongE").textContent = "🚫";
+  $("wrongT").textContent = ING[i].n + " no se necesita en " + REC[r].n + ".";
+  $("wrongBtn").textContent = "Volver a la receta";
+  $("wrongBtn").onclick = () => openRecipe(r);
+  try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
+  show("wrong", "??", () => openRecipe(r));
+}
+
+// Ingrediente escaneado SIN receta abierta: se bloquea, hay que elegir receta primero
+function openNoRecipe(){
+  $("wrongE").textContent = "👆";
+  $("wrongT").textContent = "Primero elige una receta en el recetario.";
+  $("wrongBtn").textContent = "Ir al recetario";
+  $("wrongBtn").onclick = openHome;
+  try { navigator.vibrate && navigator.vibrate(200); } catch(e) {}
+  show("wrong", "RECETARIO", null);
+}
+
+function weight(){ return Math.round(acc / 360 * PER_TURN); }
+
+function render(){
+  const w = weight(), ok = Math.abs(w - cur.target) <= TOL, C = 2 * Math.PI * 112;
+  $("w").textContent = w + " g"; $("w").classList.toggle("ok", ok);
+  $("knob").style.transform = "rotate(" + acc + "deg)";
+  $("prog").style.strokeDasharray = C;
+  $("prog").style.strokeDashoffset = C * (1 - Math.min(w / cur.target, 1));
+  $("prog").style.stroke = ok ? "var(--ok)" : "var(--ring)";
+  $("okBtn").disabled = !ok;
+  if (ok && !wasOk) feedback();
+  wasOk = ok;
+}
+
+// ---- RETROALIMENTACIÓN ----
+function feedback(){
+  try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch(e) {}
+  try { $("sw").click(); } catch(e) {}
+  try {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = 880; g.gain.value = .08; o.connect(g); g.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + .15);
+  } catch(e) {}
+  $("dialWrap").classList.remove("pop"); void $("dialWrap").offsetWidth; $("dialWrap").classList.add("pop");
+}
+
+// ---- DIAL ----
+const dial = $("dial");
+const angleOf = e => { const b = dial.getBoundingClientRect(); return Math.atan2(e.clientY - b.top - b.height/2, e.clientX - b.left - b.width/2); };
+dial.addEventListener("pointerdown", e => {
+  dial.setPointerCapture(e.pointerId); last = angleOf(e);
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch(err) {}
+});
+dial.addEventListener("pointermove", e => {
+  if (!dial.hasPointerCapture(e.pointerId)) return;
+  const a = angleOf(e); let d = a - last;
+  if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+  acc = Math.min(Math.max(acc + d * 180 / Math.PI, 0), maxDeg); last = a; render();
+});
+const nudge = g => { acc = Math.min(Math.max(acc + g / PER_TURN * 360, 0), maxDeg); render(); };
+$("minus").onclick = () => nudge(-1); $("plus").onclick = () => nudge(1);
+
+$("okBtn").onclick = () => {
+  const d = getDone(cur.r).slice(); if (!d.includes(cur.i)) d.push(cur.i);
+  setDone(cur.r, d); openRecipe(cur.r);
+};
+
+// ---- ARRANQUE NFC ----
+const p = new URLSearchParams(location.search), i = (p.get("i") || "").toLowerCase();
+if (i && ING[i]) {
+  const act = getActive();
+  if (!act) openNoRecipe();                         // sin receta abierta -> bloquear, hay que elegir receta primero
+  else if (!REC[act].items[i]) openWrong(act, i);   // el ingrediente no es de la receta abierta -> bloquear y quedarse en ella
+  else openIng(act, i, null);                       // el peso sale de la receta abierta (la harina pesa distinto en cada una)
+} else {
+  // Sin ingrediente en la URL: si había una receta en curso, volver a ella; si no, inicio
+  const act = getActive();
+  act ? openRecipe(act) : openHome();
+}
+
+// ---- DEPURACIÓN: abre la página con ?debug=1 para ver qué memoria funciona ----
+if (p.get("debug")) {
+  const d = $("dbg"); d.hidden = false;
+  d.textContent = "Leído de: " + (srcs.join(", ") || "NADA (memoria vacía al cargar)") + "\nEstado: " + JSON.stringify(S);
+}
+
+// ---- LÓGICA DEL HORNO ----
+let timeStart = 0;
+
+function openBake(r) {
+  $("bakeMsg").textContent = REC[r].bMsg;
+  $("bakeBtn").textContent = "Al horno!";
+  $("bakeResult").textContent = ""; 
+  $("bakeBtn").onclick = () => startBaking(r);
+  show("bake", "Horneando...", () => openRecipe(r));
+}
+
+function startBaking(r) {
+  timeStart = Date.now(); 
+  $("bakeBtn").textContent = "Sacar del horno";
+  $("bakeBtn").onclick = () => stopBaking(r);
+}
+
+function stopBaking(r) {
+  const targetTime = REC[r].bTime; // Leemos el tiempo meta desde el diccionario
+  const elapsed = (Date.now() - timeStart) / 1000;
+  const diff = Math.abs(elapsed - targetTime);
+  
+  let msg = `Contaste ${elapsed.toFixed(1)} segundos.\n`;
+  
+  if (diff <= 2) {
+    msg += "MasterChef 👨‍🍳";
+  } else if (elapsed < targetTime) {
+    msg += "Sigue cruda :/";
+  } else {
+    msg += "Bro... 💀 🚒";
+  }
+  
+  $("bakeResult").innerText = msg;
+  $("bakeBtn").textContent = "Volver al recetario";
+  
+  $("bakeBtn").onclick = () => {
+    setDone(r, []); // Borra el progreso de la receta
+    openHome();     // Nos manda a la pantalla inicial
+  };
+}
+</script>
+</body>
+</html>

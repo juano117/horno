@@ -320,12 +320,23 @@ function stopBaking(r) {
   }
   
   $("bakeResult").innerText = msg;
-  $("bakeBtn").textContent = "Volver al recetario";
-  
-  $("bakeBtn").onclick = () => {
-    setDone(r, []); // Borra el progreso de la receta
-    openHome();     // Nos manda a la pantalla inicial
-  };
+
+  // Salió antes de tiempo (cruda): se borra el progreso y hay que repetir la MISMA receta
+  const cruda = diff > 2 && elapsed < targetTime;
+
+  if (cruda) {
+    $("bakeBtn").textContent = "Repetir la receta";
+    $("bakeBtn").onclick = () => {
+      setDone(r, []);  // Borra el progreso de la receta
+      openRecipe(r);   // Vuelve a la misma receta, con los ingredientes en cero
+    };
+  } else {
+    $("bakeBtn").textContent = "Volver al recetario";
+    $("bakeBtn").onclick = () => {
+      setDone(r, []); // Borra el progreso de la receta
+      openHome();     // Nos manda a la pantalla inicial
+    };
+  }
 }
 </script>
 </body>
